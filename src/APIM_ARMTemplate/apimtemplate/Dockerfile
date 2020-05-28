@@ -19,8 +19,7 @@ ENV TZ Europe/London
 
 WORKDIR /app
 COPY --from=build /app ./
+RUN mkdir /extracted
 RUN chmod +x ./
 
-# RUN dotnet run extract
-
-ENTRYPOINT ["dotnet", "apimtemplate.dll", "extract"]
+ENTRYPOINT ["dotnet", "apimtemplate.dll"]
