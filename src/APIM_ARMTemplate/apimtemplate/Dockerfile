@@ -2,9 +2,11 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 WORKDIR /source
 
-# copy csproj and restore as distinct layers
-COPY ./* ./
+COPY ./*.csproj ./
 RUN dotnet restore
+
+COPY ./. ./
+WORKDIR /source/
 RUN dotnet publish -c release -o /app --self-contained false --no-restore
 
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine

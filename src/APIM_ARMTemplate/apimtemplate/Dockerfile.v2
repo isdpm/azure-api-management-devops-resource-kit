@@ -1,0 +1,32 @@
+# Second version of docker file to build from git clone of original Azure repo
+# Included in case the team decide to remove the forked repo for some reason
+# https://hub.docker.com/_/microsoft-dotnet-core
+FROM mcr.microsoft.com/dotnet/core/sdk:2.1 AS build
+WORKDIR /source
+
+# Clone the repository
+RUN git clone https://github.com/Azure/azure-api-management-devops-resource-kit.git /source
+# Checkout the revision that uses .NET core 2.1 (latest revision on 1/6/2020)
+RUN git checkout 71f2f8b39955ebbc2529763bad4f3ca8cbb843aa
+# Move to where the .csproj files are stored in the cloned project
+WORKDIR  /source/src/APIM_ARMTemplate/apimtemplate 
+RUN dotnet publish -c release -o /app --self-contained false  
+
+FROM mcr.microsoft.com/dotnet/core/aspnet:2.1-alpine
+
+# Add all the deps for the az cli and install it
+RUN apk add --no-cache curl tar openssl sudo bash jq python3
+RUN apk --update --no-cache add postgresql-client postgresql
+RUN apk add --virtual=build gcc libffi-dev musl-dev openssl-dev make python3-dev
+RUN pip3 install --upgrade pip 
+RUN pip3 install azure-cli
+
+# Set the UTC timezone
+ENV TZ Europe/London
+
+WORKDIR /app
+COPY --from=build /app ./
+RUN mkdir /extracted
+RUN chmod +x ./
+
+ENTRYPOINT ["dotnet", "apimtemplate.dll"]
